@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sudoku</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>9</text></svg>" />
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <h1 class="title">Sudoku</h1>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Tiempo</span>
+          <span class="stat-value" id="timer">00:00</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Errores</span>
+          <span class="stat-value" id="errors">0/3</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="difficulty">
+      <button class="difficulty-btn active" data-level="easy">Fácil</button>
+      <button class="difficulty-btn" data-level="medium">Medio</button>
+      <button class="difficulty-btn" data-level="hard">Difícil</button>
+    </section>
+
+    <section class="board-wrap">
+      <div class="board" id="board" aria-label="Tablero de sudoku"></div>
+    </section>
+
+    <section class="notes">
+      <label class="notes-toggle">
+        <input type="checkbox" id="notesMode" />
+        <span>Modo notas</span>
+      </label>
+    </section>
+
+    <section class="controls">
+      <button class="action-btn" id="eraseBtn">Borrar</button>
+      <button class="action-btn" id="hintBtn">Pista</button>
+      <button class="action-btn" id="undoBtn">Deshacer</button>
+      <button class="action-btn danger" id="newBtn">Nuevo juego</button>
+    </section>
+
+    <section class="numpad">
+      <button class="num-btn" data-num="1">1</button>
+      <button class="num-btn" data-num="2">2</button>
+      <button class="num-btn" data-num="3">3</button>
+      <button class="num-btn" data-num="4">4</button>
+      <button class="num-btn" data-num="5">5</button>
+      <button class="num-btn" data-num="6">6</button>
+      <button class="num-btn" data-num="7">7</button>
+      <button class="num-btn" data-num="8">8</button>
+      <button class="num-btn" data-num="9">9</button>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-content">
+      <h2 id="modalTitle"></h2>
+      <p id="modalText"></p>
+      <button class="action-btn" id="modalBtn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
