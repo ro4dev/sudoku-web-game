@@ -445,6 +445,7 @@
     if (state.finished) return;
     state.paused = !state.paused;
     pauseOverlay.classList.toggle("hidden", !state.paused);
+    boardEl.classList.toggle("paused", state.paused);
     pauseBtn.textContent = state.paused ? "▶" : "⏸";
     pauseBtn.setAttribute("aria-label", state.paused ? "Continuar" : "Pausar");
     if (state.paused) {
@@ -484,6 +485,7 @@
     timerEl.textContent = "00:00";
     modal.classList.add("hidden");
     pauseOverlay.classList.add("hidden");
+    boardEl.classList.remove("paused");
     pauseBtn.textContent = "⏸";
     pauseBtn.setAttribute("aria-label", "Pausar");
     if (mascotTimer) clearInterval(mascotTimer);

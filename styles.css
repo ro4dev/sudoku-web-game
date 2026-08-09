@@ -180,6 +180,11 @@ body {
   display: none;
 }
 
+.board.paused .cell {
+  filter: blur(9px);
+  transition: filter 0.2s ease;
+}
+
 .pause-card {
   text-align: center;
   background: var(--surface);
