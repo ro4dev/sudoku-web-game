@@ -23,6 +23,7 @@
     startTime: null,
     elapsed: 0,
     finished: false,
+    streak: 0,
   };
 
   const boardEl = document.getElementById("board");
@@ -34,6 +35,47 @@
   const modalText = document.getElementById("modalText");
   const modalBtn = document.getElementById("modalBtn");
   const numpad = document.querySelector(".numpad");
+  const mascotBubble = document.getElementById("mascotBubble");
+  const mascotMsg = document.getElementById("mascotMsg");
+
+  /* ---------------- Mascot ---------------- */
+
+  const RANDOM_MESSAGES = [
+    "¡Vamos, tú puedes! 💪",
+    "¡Cada número cuenta! 🧩",
+    "¡No te rindas, ya casi! 🌟",
+    "¡Respira y mira la caja! 🧠",
+    "¡Tú eres más listo que este sudoku! 😄",
+    "¡Sigue así, campeón! 🏆",
+    "¡Los errores son parte del juego! 💛",
+    "¡Guau! Vas de maravilla 🐾",
+  ];
+
+  const CORRECT_MESSAGES = [
+    "¡Correcto! 🔥",
+    "¡Bien! 💪",
+    "¡Perfecto! ✨",
+    "¡Exacto! 🎯",
+  ];
+
+  const ERROR_MESSAGES = [
+    "¡Uy! Mira bien la caja 😅",
+    "¡Casi! Piensa de nuevo 🤔",
+    "¡No pasa nada, continúa! 💛",
+  ];
+
+  let mascotTimer = null;
+  let mascotHideTimer = null;
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  function showMascotMessage(text) {
+    mascotMsg.textContent = text;
+    mascotBubble.classList.add("visible");
+    if (mascotHideTimer) clearTimeout(mascotHideTimer);
+    mascotHideTimer = setTimeout(() => {
+      mascotBubble.classList.remove("visible");
+    }, 4000);
+  }
 
   /* ---------------- Sudoku generation ---------------- */
 
@@ -262,19 +304,28 @@
     if (n !== state.solution[r][c]) {
       state.mistakes.add(i);
       state.errorCount++;
+      state.streak = 0;
       if (state.errorCount >= 3) {
         state.finished = true;
         stopTimer();
         showModal("Has perdido", "Cometiste 3 errores. ¡Inténtalo de nuevo!");
+        showMascotMessage("¡Ánimo! La próxima lo logras 💛");
+      } else {
+        showMascotMessage(pick(ERROR_MESSAGES));
       }
     } else {
       state.mistakes.delete(i);
+      state.streak++;
+      if (state.streak === 1) showMascotMessage(pick(CORRECT_MESSAGES));
+      else if (state.streak === 3) showMascotMessage("¡Vas en racha! 🚀");
+      else if (state.streak === 5) showMascotMessage("¡Imparable! 🌟");
     }
 
     if (checkWin()) {
       state.finished = true;
       stopTimer();
       showModal("¡Felicidades!", `Completaste el sudoku en ${formatTime(state.elapsed)}`);
+      showMascotMessage("¡INCREÍBLE! Eres una máquina 🎉");
     }
 
     render();
@@ -386,13 +437,22 @@
     state.history = [];
     state.elapsed = 0;
     state.finished = false;
+    state.streak = 0;
     timerEl.textContent = "00:00";
     modal.classList.add("hidden");
+    if (mascotTimer) clearInterval(mascotTimer);
+    mascotTimer = setInterval(() => {
+      if (!state.finished) showMascotMessage(pick(RANDOM_MESSAGES));
+    }, 25000);
     render();
     startTimer();
   }
 
   /* ---------------- Events ---------------- */
+
+  document.getElementById("mascot").addEventListener("click", () => {
+    showMascotMessage(pick(RANDOM_MESSAGES));
+  });
 
   document.querySelectorAll(".difficulty-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
