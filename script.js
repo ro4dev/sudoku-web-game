@@ -5,6 +5,7 @@
     easy: { name: "Fácil", clues: 42 },
     medium: { name: "Medio", clues: 34 },
     hard: { name: "Difícil", clues: 27 },
+    impossible: { name: "Imposible", clues: 20 },
   };
 
   const state = {
@@ -45,41 +46,54 @@
     return arr;
   };
 
-  function solve(board) {
-    const empty = findEmpty(board);
-    if (!empty) return true;
-    const [r, c] = empty;
-    for (const n of shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9])) {
-      if (isValid(board, r, c, n)) {
-        board[r][c] = n;
-        if (solve(board)) return true;
-        board[r][c] = 0;
-      }
-    }
-    return false;
-  }
-
-  function findEmpty(board) {
-    for (let r = 0; r < 9; r++) {
-      for (let c = 0; c < 9; c++) {
-        if (board[r][c] === 0) return [r, c];
-      }
-    }
-    return null;
-  }
-
-  function isValid(board, r, c, n) {
+  function candidates(board, r, c) {
+    const used = new Set();
     for (let i = 0; i < 9; i++) {
-      if (board[r][i] === n || board[i][c] === n) return false;
+      used.add(board[r][i]);
+      used.add(board[i][c]);
     }
     const br = Math.floor(r / 3) * 3;
     const bc = Math.floor(c / 3) * 3;
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
-        if (board[br + i][bc + j] === n) return false;
+        used.add(board[br + i][bc + j]);
       }
     }
-    return true;
+    const result = [];
+    for (let n = 1; n <= 9; n++) {
+      if (!used.has(n)) result.push(n);
+    }
+    return result;
+  }
+
+  function findBest(board) {
+    let best = null;
+    let bestLen = 10;
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (board[r][c] === 0) {
+          const cands = candidates(board, r, c);
+          if (cands.length < bestLen) {
+            bestLen = cands.length;
+            best = { r, c, cands };
+          }
+          if (bestLen === 1) return best;
+        }
+      }
+    }
+    return best;
+  }
+
+  function solve(board) {
+    const best = findBest(board);
+    if (!best) return true;
+    const { r, c, cands } = best;
+    for (const n of shuffle(cands)) {
+      board[r][c] = n;
+      if (solve(board)) return true;
+      board[r][c] = 0;
+    }
+    return false;
   }
 
   function countSolutions(board, limit = 2) {
@@ -87,18 +101,17 @@
     const copy = board.map((row) => row.slice());
 
     function recurse() {
-      const empty = findEmpty(copy);
-      if (!empty) {
+      const best = findBest(copy);
+      if (!best) {
         count++;
         return;
       }
-      const [r, c] = empty;
-      for (let n = 1; n <= 9 && count < limit; n++) {
-        if (isValid(copy, r, c, n)) {
-          copy[r][c] = n;
-          recurse();
-          copy[r][c] = 0;
-        }
+      const { r, c, cands } = best;
+      for (const n of cands) {
+        if (count >= limit) return;
+        copy[r][c] = n;
+        recurse();
+        copy[r][c] = 0;
       }
     }
 

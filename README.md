@@ -9,7 +9,7 @@ Disponible en GitHub Pages: https://ro4dev.github.io/sudoku-web-game/
 ## Funcionalidades
 
 - **Generador/validador**: cada puzzle se genera con backtracking y se verifica que tenga solución única.
-- **Niveles**: Fácil (42 pistas), Medio (34), Difícil (27).
+- **Niveles**: Fácil (42 pistas), Medio (34), Difícil (27), Imposible (~24).
 - **Modo notas**: rellena candidatos por celda (tecla `N` o checkbox).
 - **Pistas**: `H` o botón Pista rellena la celda seleccionada.
 - **Deshacer**: `Ctrl/Cmd+Z` o botón.
