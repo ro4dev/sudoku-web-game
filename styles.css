@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #f5f6f8;
   --surface: #ffffff;
   --border: #c9ccd3;
@@ -9,8 +10,36 @@
   --text-muted: #6b7078;
   --error: #e0392f;
   --highlight: #e3edff;
+  --highlight-strong: #d7e6ff;
+  --highlight-same: #cfe0ff;
+  --error-bg: #fdecea;
   --given: #0f1116;
   --correct: #2e9e5b;
+  --bg-overlay: rgba(245, 246, 248, 0.92);
+  --bubble-bg: #ffffff;
+  --bubble-border: #e8e6e3;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1b1e24;
+  --surface: #252a33;
+  --border: #3a414d;
+  --border-strong: #9aa3b2;
+  --primary: #6f9dff;
+  --primary-dark: #8fb0ff;
+  --text: #e6e8ec;
+  --text-muted: #9aa1ad;
+  --error: #ff6b63;
+  --highlight: #2c3a55;
+  --highlight-strong: #2f3f5e;
+  --highlight-same: #374a6b;
+  --error-bg: #3a2426;
+  --given: #f0f2f5;
+  --correct: #4ec779;
+  --bg-overlay: rgba(27, 30, 36, 0.92);
+  --bubble-bg: #252a33;
+  --bubble-border: #3a414d;
 }
 
 * {
@@ -80,7 +109,8 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.pause-btn {
+.pause-btn,
+.theme-btn {
   width: 44px;
   height: 44px;
   border: 1px solid var(--border);
@@ -93,7 +123,8 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.pause-btn:hover {
+.pause-btn:hover,
+.theme-btn:hover {
   border-color: var(--primary);
 }
 
@@ -138,7 +169,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: 3;
-  background: rgba(245, 246, 248, 0.92);
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,7 +258,7 @@ body {
 
 .cell.error {
   color: var(--error);
-  background: #fdecea;
+  background: var(--error-bg);
 }
 
 .cell.selected {
@@ -235,11 +266,11 @@ body {
 }
 
 .cell.highlight {
-  background: #d7e6ff;
+  background: var(--highlight-strong);
 }
 
 .cell.same-value {
-  background: #cfe0ff;
+  background: var(--highlight-same);
 }
 
 .cell.given.highlight,
@@ -401,8 +432,8 @@ body {
 }
 
 .mascot-bubble {
-  background: #ffffff;
-  border: 2px solid #e8e6e3;
+  background: var(--bubble-bg);
+  border: 2px solid var(--bubble-border);
   border-radius: 14px;
   padding: 10px 14px;
   max-width: 220px;
@@ -428,7 +459,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   border: 7px solid transparent;
-  border-top-color: #ffffff;
+  border-top-color: var(--bubble-bg);
   border-bottom: none;
 }
 

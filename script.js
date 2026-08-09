@@ -41,6 +41,29 @@
   const pauseBtn = document.getElementById("pauseBtn");
   const pauseOverlay = document.getElementById("pauseOverlay");
   const resumeBtn = document.getElementById("resumeBtn");
+  const themeBtn = document.getElementById("themeBtn");
+
+  /* ---------------- Theme ---------------- */
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    themeBtn.textContent = theme === "dark" ? "☀️" : "🌙";
+  }
+
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "light" || savedTheme === "dark") {
+    applyTheme(savedTheme);
+  } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    applyTheme("dark");
+  } else {
+    applyTheme("light");
+  }
+
+  themeBtn.addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+    localStorage.setItem("theme", next);
+  });
 
   /* ---------------- Mascot ---------------- */
 
