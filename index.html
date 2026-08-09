@@ -45,11 +45,16 @@
       </div>
     </section>
 
-    <section class="notes">
+    <section class="modes">
       <label class="notes-toggle">
         <input type="checkbox" id="notesMode" />
         <span>Modo notas</span>
       </label>
+      <label class="notes-toggle">
+        <input type="checkbox" id="handwritingMode" />
+        <span>Modo a mano</span>
+      </label>
+      <button class="calibrate-btn" id="calibrateBtn" title="Calibrar mi escritura">Calibrar</button>
     </section>
 
     <section class="controls">
@@ -77,6 +82,20 @@
       <h2 id="modalTitle"></h2>
       <p id="modalText"></p>
       <button class="action-btn" id="modalBtn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="drawModal">
+    <div class="modal-content draw-content">
+      <h2 id="drawTitle">Dibuja el número</h2>
+      <p id="drawHint"></p>
+      <canvas id="drawCanvas" width="280" height="280"></canvas>
+      <div class="draw-actions">
+        <button class="action-btn" id="drawClearBtn">Borrar</button>
+        <button class="action-btn" id="drawSkipBtn" style="display:none">Saltar</button>
+        <button class="action-btn" id="drawConfirmBtn">Reconocer</button>
+      </div>
+      <button class="action-btn" id="drawCancelBtn" style="margin-top:8px">Cancelar</button>
     </div>
   </div>
 

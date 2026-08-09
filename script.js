@@ -16,6 +16,7 @@
     notes: [],          // notas por celda (Set)
     selected: -1,       // celda seleccionada (0-80)
     notesMode: false,
+    handwritingMode: false,
     errorCount: 0,
     mistakes: new Set(),
     history: [],
@@ -42,6 +43,29 @@
   const pauseOverlay = document.getElementById("pauseOverlay");
   const resumeBtn = document.getElementById("resumeBtn");
   const themeBtn = document.getElementById("themeBtn");
+  const handwritingCheckbox = document.getElementById("handwritingMode");
+  const calibrateBtn = document.getElementById("calibrateBtn");
+  const drawModal = document.getElementById("drawModal");
+  const drawTitle = document.getElementById("drawTitle");
+  const drawHint = document.getElementById("drawHint");
+  const drawCanvas = document.getElementById("drawCanvas");
+  const drawClearBtn = document.getElementById("drawClearBtn");
+  const drawSkipBtn = document.getElementById("drawSkipBtn");
+  const drawConfirmBtn = document.getElementById("drawConfirmBtn");
+  const drawCancelBtn = document.getElementById("drawCancelBtn");
+
+  /* ---------------- Handwriting constants ---------------- */
+
+  const SAMPLES_PER_DIGIT = 2;
+  const GRID_SIZE = 14;
+  const RECOGNITION_THRESHOLD = 3.0;
+  const CALIB_STORAGE_KEY = "sudokuHandwritingSamples";
+
+  let pendingCell = -1;
+  let isCalibrating = false;
+  let calibSamples = [];
+  let calibDigit = 1;
+  let calibCount = 0;
 
   /* ---------------- Theme ---------------- */
 
@@ -299,20 +323,35 @@
     const c = i % 9;
     if (state.given[r][c]) {
       state.selected = i;
-    } else {
-      state.selected = state.selected === i ? -1 : i;
+      render();
+      return;
     }
+    if (state.handwritingMode) {
+      if (loadSamples().length === 0) {
+        showMascotMessage("Primero calibrá tu escritura ✏️");
+        startCalibration();
+        return;
+      }
+      pendingCell = i;
+      state.selected = i;
+      render();
+      drawTitle.textContent = "Dibuja el número";
+      drawHint.textContent = "Escribí el número y tocá Reconocer";
+      openDrawModal();
+      return;
+    }
+    state.selected = state.selected === i ? -1 : i;
     render();
   }
 
-  function placeNumber(n) {
+  function placeNumber(n, fromHandwriting = false) {
     if (state.selected < 0 || state.finished || state.paused) return;
     const i = state.selected;
     const r = Math.floor(i / 9);
     const c = i % 9;
     if (state.given[r][c]) return;
 
-    if (state.notesMode) {
+    if (state.notesMode && !fromHandwriting) {
       if (state.board[r][c] !== 0) return;
       const notes = state.notes[i];
       if (notes.has(n)) notes.delete(n);
@@ -454,6 +493,235 @@
     }
   }
 
+  /* ---------------- Handwriting ---------------- */
+
+  function loadSamples() {
+    try {
+      const raw = localStorage.getItem(CALIB_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveSamples(samples) {
+    localStorage.setItem(CALIB_STORAGE_KEY, JSON.stringify(samples));
+  }
+
+  function clearCanvas() {
+    const ctx = drawCanvas.getContext("2d");
+    ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  }
+
+  function openDrawModal() {
+    drawModal.classList.remove("hidden");
+    clearCanvas();
+    drawSkipBtn.style.display = isCalibrating ? "block" : "none";
+  }
+
+  function closeDrawModal() {
+    drawModal.classList.add("hidden");
+    clearCanvas();
+  }
+
+  function updateCalibUI() {
+    drawTitle.textContent = `Dibuja el número ${calibDigit}`;
+    drawHint.textContent = `Muestra ${calibCount + 1} de ${SAMPLES_PER_DIGIT} — ${calibDigit - 1}/9 listos`;
+  }
+
+  function startCalibration() {
+    isCalibrating = true;
+    pendingCell = -1;
+    calibSamples = [];
+    calibDigit = 1;
+    calibCount = 0;
+    updateCalibUI();
+    openDrawModal();
+  }
+
+  function finishCalibration() {
+    saveSamples(calibSamples);
+    isCalibrating = false;
+    closeDrawModal();
+    showMascotMessage("¡Calibración lista! Escribí para jugar ✏️");
+  }
+
+  function canvasPoint(e) {
+    const rect = drawCanvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (drawCanvas.width / rect.width),
+      y: (e.clientY - rect.top) * (drawCanvas.height / rect.height),
+    };
+  }
+
+  let drawing = false;
+  let lastPoint = null;
+
+  drawCanvas.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    drawCanvas.setPointerCapture(e.pointerId);
+    drawing = true;
+    lastPoint = canvasPoint(e);
+    const ctx = drawCanvas.getContext("2d");
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 18;
+    ctx.strokeStyle = "#000";
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
+    ctx.lineTo(lastPoint.x + 0.1, lastPoint.y + 0.1);
+    ctx.stroke();
+  });
+
+  drawCanvas.addEventListener("pointermove", (e) => {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = canvasPoint(e);
+    const ctx = drawCanvas.getContext("2d");
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastPoint = p;
+  });
+
+  const endDraw = () => {
+    drawing = false;
+    lastPoint = null;
+  };
+
+  drawCanvas.addEventListener("pointerup", endDraw);
+  drawCanvas.addEventListener("pointercancel", endDraw);
+
+  function captureGrid(size = GRID_SIZE) {
+    const ctx = drawCanvas.getContext("2d");
+    const W = drawCanvas.width;
+    const H = drawCanvas.height;
+    const data = ctx.getImageData(0, 0, W, H).data;
+    const drawn = [];
+    let minX = W, minY = H, maxX = -1, maxY = -1;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (data[(y * W + x) * 4 + 3] > 0) {
+          drawn.push([x, y]);
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (!drawn.length) return null;
+    const m = 8;
+    const w = maxX - minX + 2 * m;
+    const h = maxY - minY + 2 * m;
+    const grid = new Float64Array(size * size);
+    for (const [x, y] of drawn) {
+      let gx = Math.floor(((x - minX + m) / w) * size);
+      let gy = Math.floor(((y - minY + m) / h) * size);
+      if (gx >= size) gx = size - 1;
+      if (gy >= size) gy = size - 1;
+      grid[gy * size + gx]++;
+    }
+    let max = 0;
+    for (let i = 0; i < grid.length; i++) {
+      if (grid[i] > max) max = grid[i];
+    }
+    if (max > 0) {
+      for (let i = 0; i < grid.length; i++) grid[i] /= max;
+    }
+    return Array.from(grid);
+  }
+
+  function euclidean(a, b) {
+    let sum = 0;
+    for (let i = 0; i < a.length; i++) {
+      const d = a[i] - b[i];
+      sum += d * d;
+    }
+    return Math.sqrt(sum);
+  }
+
+  function recognizeDigit(grid) {
+    const samples = loadSamples();
+    let best = null;
+    let bestDist = Infinity;
+    for (const s of samples) {
+      const dist = euclidean(grid, s.grid);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = { digit: s.digit, dist };
+      }
+    }
+    return best;
+  }
+
+  function handleDrawConfirm() {
+    const grid = captureGrid();
+    if (!grid) {
+      showMascotMessage("Dibujá el número primero ✏️");
+      return;
+    }
+    if (isCalibrating) {
+      calibSamples.push({ digit: calibDigit, grid });
+      calibCount++;
+      if (calibCount >= SAMPLES_PER_DIGIT) {
+        calibDigit++;
+        calibCount = 0;
+      }
+      if (calibDigit > 9) {
+        finishCalibration();
+        return;
+      }
+      updateCalibUI();
+      clearCanvas();
+    } else {
+      const res = recognizeDigit(grid);
+      if (!res || res.dist > RECOGNITION_THRESHOLD) {
+        showMascotMessage("No reconocí el número, probá de nuevo 🤔");
+        clearCanvas();
+        return;
+      }
+      state.selected = pendingCell;
+      placeNumber(res.digit, true);
+      closeDrawModal();
+    }
+  }
+
+  function handleDrawCancel() {
+    if (isCalibrating) {
+      isCalibrating = false;
+      calibSamples = [];
+    }
+    pendingCell = -1;
+    closeDrawModal();
+  }
+
+  drawClearBtn.addEventListener("click", clearCanvas);
+  drawSkipBtn.addEventListener("click", () => {
+    if (!isCalibrating) return;
+    calibDigit++;
+    calibCount = 0;
+    if (calibDigit > 9) {
+      finishCalibration();
+      return;
+    }
+    updateCalibUI();
+    clearCanvas();
+  });
+  drawConfirmBtn.addEventListener("click", handleDrawConfirm);
+  drawCancelBtn.addEventListener("click", handleDrawCancel);
+
+  calibrateBtn.addEventListener("click", startCalibration);
+
+  handwritingCheckbox.addEventListener("change", () => {
+    state.handwritingMode = handwritingCheckbox.checked;
+    if (state.handwritingMode && loadSamples().length === 0) {
+      showMascotMessage("Primero calibrá tu escritura ✏️");
+      startCalibration();
+    }
+  });
+
   /* ---------------- Modal ---------------- */
 
   function showModal(title, text) {
@@ -525,6 +793,10 @@
   resumeBtn.addEventListener("click", togglePause);
 
   document.addEventListener("keydown", (e) => {
+    if (!drawModal.classList.contains("hidden")) {
+      if (e.key === "Escape") handleDrawCancel();
+      return;
+    }
     if (e.key === "Escape") {
       togglePause();
       return;
