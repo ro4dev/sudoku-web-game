@@ -111,18 +111,33 @@ body {
 }
 
 .board {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
   width: 100%;
   max-width: 440px;
   aspect-ratio: 1;
-  background: var(--border-strong);
+  background: var(--border);
   border: 3px solid var(--border-strong);
   border-radius: 8px;
   gap: 1px;
   overflow: hidden;
   user-select: none;
   touch-action: manipulation;
+}
+
+.board::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--border-strong), var(--border-strong)) no-repeat 33.3333% 0 / 2px 100%,
+    linear-gradient(var(--border-strong), var(--border-strong)) no-repeat 66.6666% 0 / 2px 100%,
+    linear-gradient(var(--border-strong), var(--border-strong)) no-repeat 0 33.3333% / 100% 2px,
+    linear-gradient(var(--border-strong), var(--border-strong)) no-repeat 0 66.6666% / 100% 2px;
 }
 
 .cell {
@@ -193,20 +208,6 @@ body {
 .notes-grid span.on {
   color: var(--primary-dark);
   font-weight: 700;
-}
-
-/* thick borders for 3x3 boxes */
-.cell[data-box^="0"] {
-  border-bottom: 2px solid var(--border-strong);
-}
-.cell[data-box^="2"] {
-  border-top: 2px solid var(--border-strong);
-}
-.cell[data-box$="0"] {
-  border-right: 2px solid var(--border-strong);
-}
-.cell[data-box$="2"] {
-  border-left: 2px solid var(--border-strong);
 }
 
 .notes {

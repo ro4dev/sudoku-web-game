@@ -136,11 +136,8 @@
   function createBoard() {
     boardEl.innerHTML = "";
     for (let i = 0; i < 81; i++) {
-      const r = Math.floor(i / 9);
-      const c = i % 9;
       const cell = document.createElement("div");
       cell.className = "cell";
-      cell.dataset.box = `${Math.floor(r / 3)}${Math.floor(c / 3)}`;
       cell.dataset.index = i;
       cell.addEventListener("click", () => selectCell(i));
       boardEl.appendChild(cell);
