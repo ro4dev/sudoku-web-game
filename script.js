@@ -86,7 +86,7 @@
     let count = 0;
     const copy = board.map((row) => row.slice());
 
-    function count() {
+    function recurse() {
       const empty = findEmpty(copy);
       if (!empty) {
         count++;
@@ -96,13 +96,13 @@
       for (let n = 1; n <= 9 && count < limit; n++) {
         if (isValid(copy, r, c, n)) {
           copy[r][c] = n;
-          count();
+          recurse();
           copy[r][c] = 0;
         }
       }
     }
 
-    count();
+    recurse();
     return count;
   }
 
