@@ -23,6 +23,7 @@
     startTime: null,
     elapsed: 0,
     finished: false,
+    paused: false,
     streak: 0,
   };
 
@@ -37,6 +38,9 @@
   const numpad = document.querySelector(".numpad");
   const mascotBubble = document.getElementById("mascotBubble");
   const mascotMsg = document.getElementById("mascotMsg");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const pauseOverlay = document.getElementById("pauseOverlay");
+  const resumeBtn = document.getElementById("resumeBtn");
 
   /* ---------------- Mascot ---------------- */
 
@@ -267,7 +271,7 @@
   /* ---------------- Interaction ---------------- */
 
   function selectCell(i) {
-    if (state.finished) return;
+    if (state.finished || state.paused) return;
     const r = Math.floor(i / 9);
     const c = i % 9;
     if (state.given[r][c]) {
@@ -279,7 +283,7 @@
   }
 
   function placeNumber(n) {
-    if (state.selected < 0 || state.finished) return;
+    if (state.selected < 0 || state.finished || state.paused) return;
     const i = state.selected;
     const r = Math.floor(i / 9);
     const c = i % 9;
@@ -332,7 +336,7 @@
   }
 
   function erase() {
-    if (state.selected < 0 || state.finished) return;
+    if (state.selected < 0 || state.finished || state.paused) return;
     const i = state.selected;
     const r = Math.floor(i / 9);
     const c = i % 9;
@@ -344,7 +348,7 @@
   }
 
   function hint() {
-    if (state.selected < 0 || state.finished) return;
+    if (state.selected < 0 || state.finished || state.paused) return;
     const i = state.selected;
     const r = Math.floor(i / 9);
     const c = i % 9;
@@ -357,7 +361,7 @@
   }
 
   function undo() {
-    if (state.finished) return;
+    if (state.finished || state.paused) return;
     const prev = state.history.pop();
     if (!prev) return;
     state.board = prev.board;
@@ -412,6 +416,21 @@
     return `${m}:${s}`;
   }
 
+  /* ---------------- Pause ---------------- */
+
+  function togglePause() {
+    if (state.finished) return;
+    state.paused = !state.paused;
+    pauseOverlay.classList.toggle("hidden", !state.paused);
+    pauseBtn.textContent = state.paused ? "▶" : "⏸";
+    pauseBtn.setAttribute("aria-label", state.paused ? "Continuar" : "Pausar");
+    if (state.paused) {
+      stopTimer();
+    } else {
+      startTimer();
+    }
+  }
+
   /* ---------------- Modal ---------------- */
 
   function showModal(title, text) {
@@ -437,12 +456,16 @@
     state.history = [];
     state.elapsed = 0;
     state.finished = false;
+    state.paused = false;
     state.streak = 0;
     timerEl.textContent = "00:00";
     modal.classList.add("hidden");
+    pauseOverlay.classList.add("hidden");
+    pauseBtn.textContent = "⏸";
+    pauseBtn.setAttribute("aria-label", "Pausar");
     if (mascotTimer) clearInterval(mascotTimer);
     mascotTimer = setInterval(() => {
-      if (!state.finished) showMascotMessage(pick(RANDOM_MESSAGES));
+      if (!state.finished && !state.paused) showMascotMessage(pick(RANDOM_MESSAGES));
     }, 25000);
     render();
     startTimer();
@@ -475,8 +498,15 @@
   document.getElementById("hintBtn").addEventListener("click", hint);
   document.getElementById("undoBtn").addEventListener("click", undo);
   document.getElementById("newBtn").addEventListener("click", newGame);
+  pauseBtn.addEventListener("click", togglePause);
+  resumeBtn.addEventListener("click", togglePause);
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      togglePause();
+      return;
+    }
+    if (state.paused) return;
     if (state.selected < 0) return;
     if (e.key >= "1" && e.key <= "9") {
       placeNumber(parseInt(e.key, 10));
@@ -497,7 +527,7 @@
   });
 
   function moveSelection(delta) {
-    if (state.selected < 0) return;
+    if (state.selected < 0 || state.paused) return;
     const r = Math.floor(state.selected / 9);
     const c = state.selected % 9;
     let nr = r;

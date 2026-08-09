@@ -11,15 +11,18 @@
   <main class="app">
     <header class="header">
       <h1 class="title">Sudoku</h1>
-      <div class="stats">
-        <div class="stat">
-          <span class="stat-label">Tiempo</span>
-          <span class="stat-value" id="timer">00:00</span>
+      <div class="header-right">
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Tiempo</span>
+            <span class="stat-value" id="timer">00:00</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Errores</span>
+            <span class="stat-value" id="errors">0/3</span>
+          </div>
         </div>
-        <div class="stat">
-          <span class="stat-label">Errores</span>
-          <span class="stat-value" id="errors">0/3</span>
-        </div>
+        <button class="pause-btn" id="pauseBtn" aria-label="Pausar" title="Pausar (Esc)">⏸</button>
       </div>
     </header>
 
@@ -32,6 +35,13 @@
 
     <section class="board-wrap">
       <div class="board" id="board" aria-label="Tablero de sudoku"></div>
+      <div class="pause-overlay hidden" id="pauseOverlay">
+        <div class="pause-card">
+          <h2>Pausa</h2>
+          <p>El juego está en pausa</p>
+          <button class="action-btn" id="resumeBtn">Continuar</button>
+        </div>
+      </div>
     </section>
 
     <section class="notes">
