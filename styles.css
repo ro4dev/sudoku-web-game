@@ -424,6 +424,15 @@ body {
   width: 100%;
 }
 
+.modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-actions .action-btn {
+  flex: 1;
+}
+
 .mascot {
   position: fixed;
   bottom: 16px;

@@ -35,6 +35,9 @@
   const modalTitle = document.getElementById("modalTitle");
   const modalText = document.getElementById("modalText");
   const modalBtn = document.getElementById("modalBtn");
+  const confirmModal = document.getElementById("confirmModal");
+  const confirmBtn = document.getElementById("confirmBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
   const numpad = document.querySelector(".numpad");
   const mascotBubble = document.getElementById("mascotBubble");
   const mascotMsg = document.getElementById("mascotMsg");
@@ -467,6 +470,45 @@
 
   /* ---------------- New game ---------------- */
 
+  function hasProgress() {
+    if (state.elapsed > 0) return true;
+    for (let i = 0; i < 81; i++) {
+      const r = Math.floor(i / 9);
+      const c = i % 9;
+      if (!state.given[r][c] && state.board[r][c] !== 0) return true;
+      if (state.notes[i].size > 0) return true;
+    }
+    return false;
+  }
+
+  let pendingAction = null;
+
+  function requestNewGame(action) {
+    if (!hasProgress() || state.finished) {
+      action();
+      return;
+    }
+    pendingAction = action;
+    confirmModal.classList.remove("hidden");
+  }
+
+  function closeConfirm() {
+    pendingAction = null;
+    confirmModal.classList.add("hidden");
+  }
+
+  confirmBtn.addEventListener("click", () => {
+    const action = pendingAction;
+    closeConfirm();
+    if (action) action();
+  });
+
+  cancelBtn.addEventListener("click", closeConfirm);
+
+  confirmModal.addEventListener("click", (e) => {
+    if (e.target === confirmModal) closeConfirm();
+  });
+
   function newGame() {
     stopTimer();
     const { puzzle, solution } = generatePuzzle();
@@ -504,10 +546,13 @@
 
   document.querySelectorAll(".difficulty-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".difficulty-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      state.level = btn.dataset.level;
-      newGame();
+      const level = btn.dataset.level;
+      requestNewGame(() => {
+        document.querySelectorAll(".difficulty-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.level = level;
+        newGame();
+      });
     });
   });
 
@@ -522,11 +567,15 @@
   document.getElementById("eraseBtn").addEventListener("click", erase);
   document.getElementById("hintBtn").addEventListener("click", hint);
   document.getElementById("undoBtn").addEventListener("click", undo);
-  document.getElementById("newBtn").addEventListener("click", newGame);
+  document.getElementById("newBtn").addEventListener("click", () => requestNewGame(newGame));
   pauseBtn.addEventListener("click", togglePause);
   resumeBtn.addEventListener("click", togglePause);
 
   document.addEventListener("keydown", (e) => {
+    if (!confirmModal.classList.contains("hidden")) {
+      if (e.key === "Escape") closeConfirm();
+      return;
+    }
     if (e.key === "Escape") {
       togglePause();
       return;
